@@ -11,9 +11,10 @@ This program maps the input of the joy_node to to run the ros2_controls_demos/ex
 
 // following headers can be used depending on the input and output messag type
 #include "rclcpp/rclcpp.hpp"
-#include <sensor_msgs/msg/joy.hpp>             // message type used by the joy_node
+#include <sensor_msgs/msg/joy.hpp> // message type used by the joy_node
 // #include <ros_phoenix/msg/motor_control.hpp>   // message type used by the joy_node
 #include <geometry_msgs/msg/twist_stamped.hpp> // message type diffbot uses
+#include <geometry_msgs/msg/twist.hpp>
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
@@ -24,15 +25,14 @@ enum Axis
 {
   LEFT_STICK_X = 0,
   LEFT_STICK_Y = 1,
-  LEFT_TRIGGER = 2,
-  RIGHT_STICK_X = 3,
-  RIGHT_STICK_Y = 4,
-  D_PAD_Y = 5,
-  D_PAD_X = 6
+  RIGHT_STICK_X = 2,
+  RIGHT_STICK_Y = 3,
+  D_PAD_Y = 4,
+  D_PAD_X = 5
 };
 enum Button
 {
-  Y = 3,
+  Y = 0,
   B = 1,
   A = 2,
   X = 3,
@@ -51,6 +51,11 @@ enum Button
 
 LibSerial::SerialPort serial_conn_;
 
+// void scoop_seq(){
+//   clock->sleep_for(2000ms);
+
+// }
+
 // Create the node class named Joy2Cmd which inherits the attributes
 // and methods of the rclcpp::Node class.
 class Joy2Cmd : public rclcpp::Node
@@ -60,7 +65,8 @@ public:
   Joy2Cmd()
       : Node("joy2cmd")
   {
-    std::string serial_device = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:6:1.0";
+    // std::string serial_device = "/dev/serial/by-path/pci-0000:06:00.3-usb-0:2.1:1.0";
+    std::string serial_device = "/dev/serial/by-path/pci-0000:06:00.3-usb-0:2.2:1.0";
     serial_conn_.Open(serial_device);
     printf("We are in\n");
     serial_conn_.SetBaudRate(LibSerial::BaudRate::BAUD_9600);
@@ -73,7 +79,7 @@ public:
 
     // The size of the queue is 10 messages. 10 commands per second
     // diff_cmd = this->create_publisher<ros_phoenix::msg::MotorControl>("/talon_right/set", 10); // 3
-    diff_cmd = this->create_publisher<geometry_msgs::msg::TwistStamped>("/diffbot_base_controller/cmd_vel", 10); // 3
+    diff_cmd = this->create_publisher<geometry_msgs::msg::Twist>("/diffbot_base_controller/cmd_vel_unstamped", 10); // 3
 
     // publisher_talon_left = this->create_publisher<ros_phoenix::msg::MotorControl>("/talon_left/set", 10); // 1
   }
@@ -87,23 +93,22 @@ private:
     // Declare message in the publishing message type
     // auto message_talon_right = ros_phoenix::msg::MotorControl();
     // auto message_talon_left = ros_phoenix::msg::MotorControl();
-    auto cmd_ = geometry_msgs::msg::TwistStamped();
+    auto cmd_ = geometry_msgs::msg::Twist();
 
     // setting the required to parameters for the message interface
     // message_talon_right.mode = 0; // 0: percentage output, 1: velocity
     // message_talon_left.mode = 0;
 
     // inputs are scales are [-1,1], output scale [-0.2,0.2]. Hence, input is divided by 5
-    double fwd = msg.axes[LEFT_STICK_Y] / 2; // feedback from the gamepad
-    double turn = msg.axes[LEFT_STICK_X] / 2;
-
+    double fwd = msg.axes[LEFT_STICK_Y]; // feedback from the gamepad
+    double turn = msg.axes[RIGHT_STICK_X];
     // setting the proper velocity
     // message_talon_right.value = fwd + turn;
     // message_talon_left.value = fwd - turn;
 
-    cmd_.header.frame_id = ' '; // for twiststamped messages the headers can be predefined
-    cmd_.twist.linear.x = fwd;
-    cmd_.twist.angular.z = turn;
+    // cmd_.header.frame_id = ' '; // for twiststamped messages the headers can be predefined
+    cmd_.linear.x = fwd;
+    cmd_.angular.z = turn;
 
     // Publish the message to diffbot
     diff_cmd->publish(cmd_);
@@ -111,34 +116,64 @@ private:
     // Publish the message to rrbot
     // publisher_talon_left->publish(message_talon_left);
 
-    if (msg.buttons[3] == 1)
+    if (msg.buttons[R] == 1)
     { // extend two big actuators
       serial_conn_.FlushIOBuffers();
       serial_conn_.Write("1");
       clock->sleep_for(2ms);
     }
-    else if (msg.buttons[0] == 1)
+    else if (msg.buttons[ZR] == 1)
     { // retract two big actuators
       serial_conn_.FlushIOBuffers();
       serial_conn_.Write("2");
       clock->sleep_for(2ms);
     }
-    else if (msg.buttons[5] == 1)
+    else if (msg.buttons[L] == 1)
     { // extend small actuator
       serial_conn_.FlushIOBuffers();
       serial_conn_.Write("3");
       clock->sleep_for(2ms);
     }
-    else if (msg.buttons[4] == 1)
+    else if (msg.buttons[ZL] == 1)
     { // retract small actuator
       serial_conn_.FlushIOBuffers();
       serial_conn_.Write("4");
       clock->sleep_for(2ms);
     }
-    else if (msg.buttons[2] == 1)
+    else if (msg.buttons[B] == 1)
     { // retract small actuator
       serial_conn_.FlushIOBuffers();
       serial_conn_.Write("0");
+      clock->sleep_for(2ms);
+    }
+    else if (msg.buttons[A] == 1 && msg.buttons[L] == 1 && msg.buttons[R] == 1)
+    { // reservoir position
+      serial_conn_.FlushIOBuffers();
+      serial_conn_.Write("5");
+      clock->sleep_for(2ms);
+    }
+    else if (msg.buttons[A] == 1 && msg.buttons[R] == 1)
+    { // scoop 1
+      serial_conn_.FlushIOBuffers();
+      serial_conn_.Write("6");
+      clock->sleep_for(2ms);
+    }
+    else if (msg.buttons[A] == 1 && msg.buttons[ZR] == 1)
+    { // scoop 2
+      serial_conn_.FlushIOBuffers();
+      serial_conn_.Write("7");
+      clock->sleep_for(2ms);
+    }
+    else if (msg.buttons[A] == 1 && msg.buttons[L] == 1)
+    { // scoop 3
+      serial_conn_.FlushIOBuffers();
+      serial_conn_.Write("8");
+      clock->sleep_for(2ms);
+    }
+    else if (msg.buttons[A] == 1 && msg.buttons[ZL] == 1 && msg.buttons[ZR] == 1)
+    { // dumping
+      serial_conn_.FlushIOBuffers();
+      serial_conn_.Write("9");
       clock->sleep_for(2ms);
     }
   }
@@ -148,7 +183,7 @@ private:
 
   // Declaration of the publisher attribute for diffbot
   // rclcpp::Publisher<ros_phoenix::msg::MotorControl>::SharedPtr diff_cmd;
-  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr diff_cmd;
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr diff_cmd;
 
   // Declaration of the publisher attribute for rrbot
   // rclcpp::Publisher<ros_phoenix::msg::MotorControl>::SharedPtr publisher_talon_left;

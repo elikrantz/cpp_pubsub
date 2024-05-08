@@ -1,3 +1,4 @@
+
 /*
 This program maps the input of the joy_node to to run the ros2_controls_demos/example_2
 */
@@ -7,10 +8,9 @@ This program maps the input of the joy_node to to run the ros2_controls_demos/ex
 #include <memory>
 #include <string>
 
-
 // following headers can be used depending on the input and output messag type
 #include "rclcpp/rclcpp.hpp"
-#include <sensor_msgs/msg/joy.hpp>             // message type used by the joy_node
+#include <sensor_msgs/msg/joy.hpp> // message type used by the joy_node
 // #include <ros_phoenix/msg/motor_control.hpp>   // message type used by the joy_node
 #include <geometry_msgs/msg/twist_stamped.hpp> // message type diffbot uses
 #include <geometry_msgs/msg/twist.hpp>
@@ -46,7 +46,6 @@ enum Button
   CIRCLE = 13
 
 };
-
 
 // Create the node class named Joy2Cmd which inherits the attributes
 // and methods of the rclcpp::Node class.
@@ -93,13 +92,73 @@ private:
     // message_talon_right.value = fwd + turn;
     // message_talon_left.value = fwd - turn;
 
-    //cmd_.header.frame_id = ' '; // for twiststamped messages the headers can be predefined
+    // cmd_.header.frame_id = ' '; // for twiststamped messages the headers can be predefined
     cmd_.linear.x = fwd;
     cmd_.angular.z = turn;
 
     // Publish the message to diffbot
     diff_cmd->publish(cmd_);
 
+    if (msg.buttons[A])
+    { // scooping
+      printf("Got command A: Scooping\n");
+      // serial_conn_.FlushIOBuffers();
+      // // serial_conn_.Write("6");
+      // serial_conn_.Write("0");
+      clock->sleep_for(10000ms);
+
+
+      int i = 0;
+
+      while (i < 20)
+      {
+        // Publish the message to diffbot
+        cmd_.linear.x = -01.00;
+        cmd_.angular.z = 0.00;
+        diff_cmd->publish(cmd_);
+        clock->sleep_for(50ms);
+        i++;
+      }
+    }
+    if (msg.buttons[Y])
+    { // dumping
+      printf("Got command Y: Dumping\n");
+      // serial_conn_.FlushIOBuffers();
+      // // serial_conn_.Write("6");
+      // serial_conn_.Write("0");
+      clock->sleep_for(10000ms);
+
+      int i = 0;
+
+      while (i < 40)
+      {
+        // Publish the message to diffbot
+        cmd_.linear.x = 01.00;
+        cmd_.angular.z = 0.00;
+        diff_cmd->publish(cmd_);
+        clock->sleep_for(50ms);
+        i++;
+      }
+    }
+    // // serial_conn_.FlushIOBuffers();
+    // // serial_conn_.Write("0"); // scoop 2
+    // clock->sleep_for(5000ms);
+
+    // i = 0;
+
+    // while (i < 20)
+    // {
+    //   // Publish the message to diffbot
+    //   cmd_.linear.x = -1.00;
+    //   cmd_.angular.z = 0.00;
+    //   diff_cmd->publish(cmd_);
+    //   clock->sleep_for(50ms);
+    //   i++;
+    // }
+
+    // serial_conn_.FlushIOBuffers();
+    // serial_conn_.Write("0"); // reservoir
+    // clock->sleep_for(30000ms);
   }
 
   // Declare the subscription attribute

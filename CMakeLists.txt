@@ -49,6 +49,14 @@ install(TARGETS
   commander
   DESTINATION lib/${PROJECT_NAME})
   
+add_executable(rover src/rover.cpp)
+ament_target_dependencies(rover rclcpp sensor_msgs geometry_msgs serial)
+target_link_libraries(rover serial)
+
+install(TARGETS
+  rover
+  DESTINATION lib/${PROJECT_NAME})
+  
 add_executable(motors src/just_motors.cpp)
 ament_target_dependencies(motors rclcpp sensor_msgs ros_phoenix serial) 
 target_link_libraries(motors serial)
