@@ -64,6 +64,14 @@ target_link_libraries(motors serial)
 install(TARGETS
   motors
   DESTINATION lib/${PROJECT_NAME})
+  
+add_executable(today src/today.cpp)
+ament_target_dependencies(today rclcpp sensor_msgs ros_phoenix serial) 
+target_link_libraries(today serial)
+
+install(TARGETS
+  today
+  DESTINATION lib/${PROJECT_NAME})
 
 
 # Install launch files.
