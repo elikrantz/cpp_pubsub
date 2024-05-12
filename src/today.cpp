@@ -120,10 +120,6 @@ private:
             serial_conn_.Write("6");
             clock->sleep_for(10000ms);
 
-            serial_conn_.FlushIOBuffers();
-            serial_conn_.Write("5");
-            clock->sleep_for(250ms);
-
             int i = 0;
 
             while (i < 60) // 10 is 500ms
@@ -136,17 +132,22 @@ private:
                 i++;
             }
 
-            // i = 0;
+            // 5 is reservoir
+            serial_conn_.FlushIOBuffers();
+            serial_conn_.Write("5");
+            clock->sleep_for(2000ms);
 
-            // while (i < 40)
-            // {
-            //     // Publish the message to diffbot
-            //     cmd_.linear.x = -01.00;
-            //     cmd_.angular.z = 0.00;
-            //     diff_cmd->publish(cmd_);
-            //     clock->sleep_for(50ms);
-            //     i++;
-            // }
+            i = 0;
+
+            while (i < 40) // 10 is 0.5s
+            {
+                // Publish the message to diffbot
+                cmd_.linear.x = -01.00;
+                cmd_.angular.z = 0.00;
+                diff_cmd->publish(cmd_);
+                clock->sleep_for(50ms);
+                i++;
+            }
         }
         if (msg.buttons[Y])
         { // dumping
@@ -157,7 +158,7 @@ private:
 
             int i = 0;
 
-            while (i < 40)
+            while (i < 60) // 10 is 0.5s
             {
                 // Publish the message to diffbot
                 cmd_.linear.x = 01.00;
@@ -168,26 +169,38 @@ private:
             }
         }
 
-        if (msg.buttons[ZR] == 1)
-        { // retract two big actuators
+        if (msg.buttons[R] == 1)
+        { // extend lifting actuators
+            serial_conn_.FlushIOBuffers();
+            serial_conn_.Write("1");
+            clock->sleep_for(2ms);
+        }
+        else if (msg.buttons[ZR] == 1)
+        { // retract lifting actuators
             serial_conn_.FlushIOBuffers();
             serial_conn_.Write("2");
             clock->sleep_for(2ms);
         }
         else if (msg.buttons[L] == 1)
-        { // extend small actuator
+        { // extend tilting actuator
             serial_conn_.FlushIOBuffers();
             serial_conn_.Write("3");
             clock->sleep_for(2ms);
         }
         else if (msg.buttons[ZL] == 1)
-        { // retract small actuator
+        { // retract tilting actuator
             serial_conn_.FlushIOBuffers();
             serial_conn_.Write("4");
             clock->sleep_for(2ms);
         }
+        else if (msg.buttons[B] == 1)
+        { // all stop
+            serial_conn_.FlushIOBuffers();
+            serial_conn_.Write("0");
+            clock->sleep_for(2ms);
+        }
         else if (msg.buttons[X] == 1)
-        { // reservoir position
+        { // reservoir
             serial_conn_.FlushIOBuffers();
             serial_conn_.Write("5");
             clock->sleep_for(2ms);
