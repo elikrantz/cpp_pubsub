@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.8)
-
 project(cpp_pubsub)
 set(PCL_DIR "/home/luna/NUC/vcpkg/ports/pcl.cmake")
 
@@ -20,9 +19,6 @@ find_package(PCL REQUIRED)
 #link_directories(${PCL_DIRS})
 find_package(pcl_conversions REQUIRED)
 find_package(depthimage_to_laserscan REQUIRED)
-# find_package(nav2_behavior_tree REQUIRED)
-find_package(nav2_msgs REQUIRED)
-
 
 rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/PhoenixControl.msg"
@@ -78,30 +74,12 @@ install(TARGETS
 # New for depthCamera_proccess
 add_executable(depthProc src/depthCamera_proccess.cpp)
 ament_target_dependencies(depthProc rclcpp sensor_msgs geometry_msgs pcl_conversions PCL depthimage_to_laserscan)
-target_link_libraries(depthProc )
+target_link_libraries(depthProc ${Boost_SYSTEM_LIBRARY})
 
 install(TARGETS
   depthProc
   DESTINATION lib/${PROJECT_NAME})
-
-# New for combine Point clouds
-add_executable(pointcloud_combiner src/combineForScan.cpp)
-ament_target_dependencies(pointcloud_combiner rclcpp sensor_msgs std_msgs pcl_conversions PCL)
-target_link_libraries(pointcloud_combiner ${Boost_SYSTEM_LIBRARY})
-
-install(TARGETS
-  pointcloud_combiner
-  DESTINATION lib/${PROJECT_NAME})
-
-# New for reading RVIZ
-add_executable(goalHandle src/handleGoals.cpp)
-  ament_target_dependencies(goalHandle rclcpp sensor_msgs geometry_msgs nav2_msgs std_msgs)
-  target_link_libraries(goalHandle ${Boost_SYSTEM_LIBRARY})
-
-install(TARGETS
-  goalHandle
-  DESTINATION lib/${PROJECT_NAME})
-
+  
 add_executable(today src/today.cpp)
 ament_target_dependencies(today rclcpp sensor_msgs ros_phoenix serial) 
 target_link_libraries(today serial)
@@ -114,11 +92,6 @@ install(TARGETS
 # Install launch files.
 install(DIRECTORY
   launch
-  DESTINATION share/${PROJECT_NAME}/
-)
-
-install(DIRECTORY
-  rviz
   DESTINATION share/${PROJECT_NAME}/
 )
 

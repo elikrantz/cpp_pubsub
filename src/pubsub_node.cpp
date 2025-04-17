@@ -66,7 +66,7 @@ public:
       : Node("joy2cmd")
   {
     // std::string serial_device = "/dev/serial/by-path/pci-0000:06:00.3-usb-0:2.1:1.0";
-    std::string serial_device = "/dev/serial/by-path/pci-0000:06:00.3-usb-0:2.2:1.0";
+    std::string serial_device = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.0";
     serial_conn_.Open(serial_device);
     printf("We are in\n");
     serial_conn_.SetBaudRate(LibSerial::BaudRate::BAUD_9600);
