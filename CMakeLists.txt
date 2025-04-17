@@ -22,12 +22,44 @@ find_package(pcl_conversions REQUIRED)
 find_package(depthimage_to_laserscan REQUIRED)
 # find_package(nav2_behavior_tree REQUIRED)
 find_package(nav2_msgs REQUIRED)
+find_package(rviz_common REQUIRED)
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
+find_package(pluginlib REQUIRED)
+find_package(rviz_rendering REQUIRED)
 
 
 rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/PhoenixControl.msg"
 DEPENDENCIES ros_phoenix # Add packages that above messages depend on, in this case geometry_msgs for Sphere.msg
 )
+
+
+add_library(cpp_pubsub_tool_plugin SHARED
+  src/resetButton.cpp
+)
+ament_target_dependencies(cpp_pubsub_tool_plugin
+  rclcpp
+  std_msgs
+  rviz_common
+)
+target_include_directories(cpp_pubsub_tool_plugin PRIVATE
+  include
+)
+ament_target_dependencies(cpp_pubsub_tool_plugin
+  rclcpp
+  std_msgs
+  rviz_common
+  rviz_rendering
+)
+install(TARGETS cpp_pubsub_tool_plugin
+  LIBRARY DESTINATION lib
+)
+pluginlib_export_plugin_description_file(rviz_common cpp_pubsub_plugin_description.xml)
+install(FILES
+  cpp_pubsub_plugin_description.xml
+  DESTINATION share/${PROJECT_NAME}
+)
+
 
 # add_executable(serial_com src/arduino.cpp)
 # ament_target_dependencies(serial_com rclcpp std_msgs geometry_msgs sensor_msgs serial)

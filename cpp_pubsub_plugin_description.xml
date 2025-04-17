@@ -1,0 +1,7 @@
+<library path="libcpp_pubsub_tool_plugin">
+  <class name="cpp_pubsub::ResetButton"
+         type="cpp_pubsub::ResetButton"
+         base_class_type="rviz_common::Tool">
+    <description>Reset button tool</description>
+  </class>
+</library>
